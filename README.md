@@ -90,16 +90,15 @@ df_resultat.write_csv("resultat.csv")
 print(df_resultat.head(5))
 ```
 
-Résultat:
+Résultat (shape: 5, 12):
 
-<div><style>
-.dataframe > thead > tr,
-.dataframe > tbody > tr {
-  text-align: right;
-  white-space: pre-wrap;
-}
-</style>
-<small>shape: (5, 12)</small><table border="1" class="dataframe"><thead><tr><th>Rue et N°</th><th>SITG_ADRESSE</th><th>SITG_NPA</th><th>SITG_NOM_NPA</th><th>SITG_COMMUNE</th><th>SITG_EGID</th><th>SITG_EGRID</th><th>SITG_SCORE</th><th>SITG_LON</th><th>SITG_LAT</th><th>SITG_EST_EPSG_2056</th><th>SITG_NORD_EPSG_2056</th></tr><tr><td>str</td><td>str</td><td>i64</td><td>str</td><td>str</td><td>i64</td><td>str</td><td>f64</td><td>f64</td><td>f64</td><td>f64</td><td>f64</td></tr></thead><tbody><tr><td>&quot;12 rue Jean-Charles Amat&quot;</td><td>&quot;Rue Jean-Charles-AMAT 12&quot;</td><td>1202</td><td>&quot;Genève&quot;</td><td>&quot;Genève-Petit-Saconnex&quot;</td><td>2037721</td><td>&quot;CH168165638919&quot;</td><td>95.83</td><td>6.148414</td><td>46.21442</td><td>2.5004e6</td><td>1.1189e6</td></tr><tr><td>&quot;37, sous Garan&quot;</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td></tr><tr><td>&quot;Ancienne route, 78&quot;</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td></tr><tr><td>&quot;Av de Thonex 30&quot;</td><td>&quot;Avenue de Thônex 30&quot;</td><td>1225</td><td>&quot;Chêne-Bourg&quot;</td><td>&quot;Chêne-Bourg&quot;</td><td>295511715</td><td>&quot;CH576391476529&quot;</td><td>100.0</td><td>6.198379</td><td>46.19087</td><td>2.5043e6</td><td>1.1162e6</td></tr><tr><td>&quot;Av. Blanc, 5&quot;</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td><td>null</td></tr></tbody></table></div>
+| Rue et N° | SITG_ADRESSE | SITG_NPA | SITG_NOM_NPA | SITG_COMMUNE | SITG_EGID | SITG_EGRID | SITG_SCORE | SITG_LON | SITG_LAT | SITG_EST_EPSG_2056 | SITG_NORD_EPSG_2056 |
+|-----------|--------------|----------|--------------|--------------|-----------|------------|-----------|----------|----------|-----------------|-----------------|
+| "12 rue Jean-Charles Amat" | "Rue Jean-Charles-AMAT 12" | 1202 | "Genève" | "Genève-Petit-Saconnex" | 2037721 | "CH168165638919" | 95.83 | 6.148414 | 46.21442 | 2.5004e6 | 1.1189e6 |
+| "37, sous Garan" | null | null | null | null | null | null | null | null | null | null | null |
+| "Ancienne route, 78" | null | null | null | null | null | null | null | null | null | null | null |
+| "Av de Thonex 30" | "Avenue de Thônex 30" | 1225 | "Chêne-Bourg" | "Chêne-Bourg" | 295511715 | "CH576391476529" | 100.0 | 6.198379 | 46.19087 | 2.5043e6 | 1.1162e6 |
+| "Av. Blanc, 5" | null | null | null | null | null | null | null | null | null | null | null |
 
 ## Paramètres de `sitg_geocode_async`
 
