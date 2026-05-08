@@ -90,7 +90,9 @@ df_resultat.write_csv("resultat.csv")
 print(df_resultat.head(5))
 ```
 
-Résultat (shape: 5, 12):
+Résultat: 
+
+(shape: 5, 12)
 
 | Rue et N° | SITG_ADRESSE | SITG_NPA | SITG_NOM_NPA | SITG_COMMUNE | SITG_EGID | SITG_EGRID | SITG_SCORE | SITG_LON | SITG_LAT | SITG_EST_EPSG_2056 | SITG_NORD_EPSG_2056 |
 |-----------|--------------|----------|--------------|--------------|-----------|------------|-----------|----------|----------|-----------------|-----------------|
