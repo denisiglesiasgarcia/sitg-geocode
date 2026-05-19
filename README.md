@@ -18,7 +18,7 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 
 ```bash
 # Depuis le dépôt git
-uv add git+https://github.com/denisiglesiasgarcia/sitg-geocodage
+uv add git+https://github.com/denisiglesiasgarcia/sitg-geocode
 
 # Créer venv
 uv sync
