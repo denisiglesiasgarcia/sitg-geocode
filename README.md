@@ -103,10 +103,10 @@ Résultat:
 
 | Paramètre              | Type              | Défaut      | Description                                                                 |
 |------------------------|-------------------|-------------|-----------------------------------------------------------------------------|
-| `df`                   | `pl.DataFrame` \| `pd.DataFrame` | — | DataFrame en entrée (Polars ou Pandas)                    |
+| `df`                   | `pl.DataFrame`    | —           | DataFrame en entrée (Polars)                                                |
 | `col_adresse`          | `str`             | —           | Nom de la colonne contenant les adresses à géocoder                         |
 | `max_concurrent`       | `int`             | `10`        | Nombre maximum de requêtes HTTP simultanées                                 |
-| `min_score_threshold`  | `float`           | `0.0`       | Score minimum pour conserver un résultat (0–100). `0.0` = conserver tout   |
+| `min_score_threshold`  | `float`           | `0.0`       | Score minimum pour conserver un résultat (0–100). `0.0` = conserver tout    |
 
 ## Colonnes retournées
 
