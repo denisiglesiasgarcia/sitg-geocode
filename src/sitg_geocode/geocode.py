@@ -57,7 +57,7 @@ _RESULT_FIELDS = [
 _EMPTY_RESULT = {f: None for f in _RESULT_FIELDS}
 
 # Schéma attendu après transformation — source de vérité
-EXPECTED_SCHEMA: dict[str, pl.DataType] = {
+EXPECTED_SCHEMA: dict[str, type[pl.DataType]] = {
     "SITG_ADRESSE": pl.String,
     "SITG_NPA": pl.Int64,
     "SITG_NOM_NPA": pl.String,
