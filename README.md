@@ -78,7 +78,6 @@ df = pl.read_csv("test_adresses.csv")
 result_geocode = await sitg_geocode_async(
     df,
     col_adresse="Rue et N°",
-    output_format="polars",
     max_concurrent=10,
     min_score_threshold=95,
 )
@@ -106,7 +105,6 @@ Résultat:
 |------------------------|-------------------|-------------|-----------------------------------------------------------------------------|
 | `df`                   | `pl.DataFrame` \| `pd.DataFrame` | — | DataFrame en entrée (Polars ou Pandas)                    |
 | `col_adresse`          | `str`             | —           | Nom de la colonne contenant les adresses à géocoder                         |
-| `output_format`        | `str`             | `"polars"`  | Format de sortie : `"polars"` ou `"pandas"`                                 |
 | `max_concurrent`       | `int`             | `10`        | Nombre maximum de requêtes HTTP simultanées                                 |
 | `min_score_threshold`  | `float`           | `0.0`       | Score minimum pour conserver un résultat (0–100). `0.0` = conserver tout   |
 
