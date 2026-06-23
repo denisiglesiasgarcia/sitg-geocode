@@ -4,12 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sitg-geocode"
-version = "0.1.0"
+version = "0.1.1"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "aiohttp>=3.13.5",
+    "bump-my-version>=1.4.1",
     "fastexcel>=0.20.2",
     "ipykernel>=7.2.0",
     "ipywidgets>=8.1.8",
@@ -41,3 +42,14 @@ select = [
 [tool.ty]
 # Exclude notebooks and generated files
 exclude = [".venv"]
+
+[tool.bumpversion]
+current_version = "0.1.1"
+commit = false
+tag = false
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+regex = true
+search = '^version = "{current_version}"'
+replace = 'version = "{new_version}"'

@@ -1,32 +1,44 @@
-repos:
-  # Standard file hygiene
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-toml
-      - id: check-merge-conflict
-      - id: check-added-large-files
-        args: ["--maxkb=500"]
+# Pre-commit hooks — ruff only.
+# uv operations (version bump, lock, sync, export) are handled by `make commit`.
+#
+# First-time setup:
+#   pre-commit install
+#   pre-commit autoupdate   # pins ruff rev to its actual latest release
 
-  # Ruff: lint + format in one pass
+repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.13
+    rev: v0.15.18
     hooks:
+      - id: ruff-format
       - id: ruff
         args: [--fix]
-      - id: ruff-format
 
-  # ty: type checking
-  - repo: https://github.com/astral-sh/ty-pre-commit
-    rev: v0.0.11
+  - repo: local
     hooks:
-      - id: ty
+      - id: auto-bump-patch
+        name: auto bump patch version
+        language: script
+        entry: scripts/auto_bump_patch.sh
+        stages: [pre-commit]
+        always_run: true
+        pass_filenames: false
 
-  # Strip notebook outputs
-  - repo: https://github.com/kynan/nbstripout
-    rev: 0.8.1
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.11.23
     hooks:
-      - id: nbstripout
+      - id: uv-export
+        args: ["--frozen", "--output-file=requirements.txt", "--quiet"]
+      - id: uv-lock
+        args: ["--upgrade"]
+      - id: uv-sync
+        args: ["--locked", "--all-packages"]
+
+  - repo: local
+    hooks:
+      - id: tag-version
+        name: tag version after commit
+        language: script
+        entry: scripts/tag_version.sh
+        stages: [post-commit]
+        always_run: true
+        pass_filenames: false
