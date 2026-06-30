@@ -33,7 +33,6 @@ import logging
 from typing import Literal
 
 import aiohttp
-import pandas as pd
 import polars as pl
 from tqdm.auto import tqdm
 
@@ -58,7 +57,7 @@ _RESULT_FIELDS = [
 _EMPTY_RESULT = {f: None for f in _RESULT_FIELDS}
 
 # Schéma attendu après transformation — source de vérité
-EXPECTED_SCHEMA: dict[str, pl.DataType] = {
+EXPECTED_SCHEMA: dict[str, type[pl.DataType]] = {
     "SITG_ADRESSE": pl.String,
     "SITG_NPA": pl.Int64,
     "SITG_NOM_NPA": pl.String,
@@ -126,18 +125,17 @@ async def _fetch_one(
 
 
 async def sitg_geocode_async(
-    df: pl.DataFrame | pd.DataFrame,
+    df: pl.DataFrame,
     col_adresse: str,
-    output_format: Literal["polars", "pandas"] = "polars",
     max_concurrent: int = 10,
     min_score_threshold: float = 0.0,
-) -> pl.DataFrame | pd.DataFrame:
+) -> pl.DataFrame:
     """
     Géocode une colonne d'adresses via l'API SITG Lab.
 
     Paramètres
     ----------
-    df            : DataFrame Polars ou Pandas en entrée
+    df            : DataFrame Polars
     col_adresse   : nom de la colonne contenant les adresses
     output_format : "polars" (défaut) ou "pandas"
     max_concurrent: nombre max de requêtes HTTP simultanées
@@ -147,11 +145,7 @@ async def sitg_geocode_async(
     DataFrame avec la colonne adresse + les champs SITG définis dans EXPECTED_SCHEMA.
     Les types sont validés et loggés si un écart est détecté.
     """
-    adresses = (
-        df[col_adresse].to_list()
-        if isinstance(df, pl.DataFrame)
-        else df[col_adresse].tolist()
-    )
+    adresses = df[col_adresse].to_list()
 
     semaphore = asyncio.Semaphore(max_concurrent)
     async with aiohttp.ClientSession() as session:
@@ -174,7 +168,7 @@ async def sitg_geocode_async(
     if min_score_threshold > 0:
         result = result.filter(pl.col("SITG_SCORE") >= min_score_threshold)
 
-    return result.to_pandas() if output_format == "pandas" else result
+    return result
 
 
 async def inspect_sitg_response(adresse: str) -> None:
