@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sitg-geocode"
-version = "0.1.5"
+version = "0.1.6"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -39,12 +39,12 @@ select = [
     "SIM",  # flake8-simplify
 ]
 
-[tool.ty]
-# Exclude notebooks and generated files
-exclude = [".venv"]
+# [tool.ty] now lives in the standalone ty.toml synced from the ci-templates
+# repo, which takes precedence over any [tool.ty] left here. See
+# ci-templates/README.md.
 
 [tool.bumpversion]
-current_version = "0.1.5"
+current_version = "0.1.6"
 commit = false
 tag = false
 
