@@ -30,7 +30,6 @@ SITG_NORD_EPSG_2056     Coordonnée Nord LV95 / EPSG:2056
 import asyncio
 import json
 import logging
-from typing import Literal
 
 import aiohttp
 import polars as pl
@@ -137,7 +136,6 @@ async def sitg_geocode_async(
     ----------
     df            : DataFrame Polars
     col_adresse   : nom de la colonne contenant les adresses
-    output_format : "polars" (défaut) ou "pandas"
     max_concurrent: nombre max de requêtes HTTP simultanées
     min_score_threshold: seuil minimum de score pour considérer un résultat comme valide
     Retourne
