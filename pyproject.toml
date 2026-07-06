@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sitg-geocode"
-version = "0.1.8"
+version = "0.1.9"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -48,7 +48,7 @@ select = [
 # ci-templates/README.md.
 
 [tool.bumpversion]
-current_version = "0.1.8"
+current_version = "0.1.9"
 commit = false
 tag = false
 

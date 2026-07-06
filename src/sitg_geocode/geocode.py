@@ -169,9 +169,15 @@ async def sitg_geocode_async(
     return result
 
 
-async def inspect_sitg_response(adresse: str) -> None:
-    """Affiche la réponse brute de l'API pour une adresse donnée."""
+async def inspect_sitg_response(adresse: str, **params_override: str) -> None:
+    """Affiche la réponse brute de l'API pour une adresse donnée.
+
+    params_override permet de remplacer/ajouter des paramètres de requête,
+    par ex. inspect_sitg_response(adresse, suggest="true") pour comparer
+    le comportement avec suggest=false.
+    """
     params = {"q": adresse, "limit": "1", "offset": "0", "suggest": "false"}
+    params.update(params_override)
     async with (
         aiohttp.ClientSession() as session,
         session.get(API_URL, params=params) as resp,
