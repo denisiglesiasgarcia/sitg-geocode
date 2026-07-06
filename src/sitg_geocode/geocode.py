@@ -176,7 +176,7 @@ async def inspect_sitg_response(adresse: str, **params_override: str) -> None:
     par ex. inspect_sitg_response(adresse, suggest="true") pour comparer
     le comportement avec suggest=false.
     """
-    params = {"q": adresse, "limit": "1", "offset": "0", "suggest": "false"}
+    params: dict[str, str] = {"q": adresse, "limit": "1", "offset": "0", "suggest": "false"}
     params.update(params_override)
     async with (
         aiohttp.ClientSession() as session,
