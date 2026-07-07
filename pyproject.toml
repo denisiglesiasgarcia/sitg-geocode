@@ -4,12 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sitg-geocode"
-version = "0.1.14"
+version = "0.1.16"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "aiohttp>=3.13.5",
+    "dataframely>=2.11.0",
+    "loguru>=0.7.3",
     "polars>=1.40.1",
     "tqdm>=4.67.3",
 ]
@@ -48,7 +50,7 @@ select = [
 # ci-templates/README.md.
 
 [tool.bumpversion]
-current_version = "0.1.14"
+current_version = "0.1.16"
 commit = false
 tag = false
 

@@ -35,77 +35,54 @@ SITG_NORD_EPSG_2056     Coordonnée Nord LV95 / EPSG:2056
 
 import asyncio
 import json
-import logging
 
 import aiohttp
+import dataframely as dy
 import polars as pl
+from loguru import logger
 from tqdm.auto import tqdm
-
-logger = logging.getLogger(__name__)
 
 API_URL = "https://geocodage.sitg-lab.ch/api/v2/search"
 
-_RESULT_FIELDS = [
-    "SITG_ADRESSE_ID",
-    "SITG_ADRESSE",
-    "SITG_NPA",
-    "SITG_NOM_NPA",
-    "SITG_COMMUNE",
-    "SITG_TYPE",
-    "SITG_CANTON",
-    "SITG_PAYS",
-    "SITG_EGID",
-    "SITG_EGRID",
-    "SITG_SCORE",
-    "SITG_PROVIDER",
-    "SITG_LON",
-    "SITG_LAT",
-    "SITG_EST_EPSG_2056",
-    "SITG_NORD_EPSG_2056",
-]
 
+# Schéma attendu après transformation — source de vérité.
+# Toutes les colonnes sont nullables : le géocodage peut échouer pour une adresse.
+class SitgGeocodeSchema(dy.Schema):
+    SITG_ADRESSE_ID = dy.String(nullable=True)
+    SITG_ADRESSE = dy.String(nullable=True)
+    SITG_NPA = dy.Int64(nullable=True, min=1200, max=1299)
+    SITG_NOM_NPA = dy.String(nullable=True)
+    SITG_COMMUNE = dy.String(nullable=True)
+    SITG_TYPE = dy.String(nullable=True)
+    SITG_CANTON = dy.String(nullable=True)
+    SITG_PAYS = dy.String(nullable=True)
+    SITG_EGID = dy.Int64(nullable=False, min=10000)
+    SITG_EGRID = dy.String(nullable=True)
+    SITG_SCORE = dy.Float64(nullable=False, min=0.0, max=100.0)
+    SITG_PROVIDER = dy.String(nullable=True)
+    SITG_LON = dy.Float64(nullable=True)
+    SITG_LAT = dy.Float64(nullable=True)
+    SITG_EST_EPSG_2056 = dy.Float64(nullable=True)
+    SITG_NORD_EPSG_2056 = dy.Float64(nullable=True)
+
+
+_RESULT_FIELDS = SitgGeocodeSchema.column_names()
 _EMPTY_RESULT = {f: None for f in _RESULT_FIELDS}
-
-# Schéma attendu après transformation — source de vérité
-EXPECTED_SCHEMA: dict[str, type[pl.DataType]] = {
-    "SITG_ADRESSE_ID": pl.String,
-    "SITG_ADRESSE": pl.String,
-    "SITG_NPA": pl.Int64,
-    "SITG_NOM_NPA": pl.String,
-    "SITG_COMMUNE": pl.String,
-    "SITG_TYPE": pl.String,
-    "SITG_CANTON": pl.String,
-    "SITG_PAYS": pl.String,
-    "SITG_EGID": pl.Int64,
-    "SITG_EGRID": pl.String,
-    "SITG_SCORE": pl.Float64,
-    "SITG_PROVIDER": pl.String,
-    "SITG_LON": pl.Float64,
-    "SITG_LAT": pl.Float64,
-    "SITG_EST_EPSG_2056": pl.Float64,
-    "SITG_NORD_EPSG_2056": pl.Float64,
-}
-
-# Toutes les colonnes résultat sont nullable (le géocodage peut échouer)
-NULLABLE_COLUMNS: frozenset[str] = frozenset(EXPECTED_SCHEMA.keys())
 
 
 def validate_schema(df: pl.DataFrame) -> list[str]:
     """
-    Vérifie que le DataFrame respecte EXPECTED_SCHEMA.
+    Vérifie que le DataFrame respecte SitgGeocodeSchema (colonnes, types, et
+    règles de contenu comme le score dans [0, 100]) via dataframely.
     Retourne une liste d'erreurs (vide = OK).
     """
-    errors: list[str] = []
-    for col, expected_dtype in EXPECTED_SCHEMA.items():
-        if col not in df.columns:
-            errors.append(f"{col}: colonne absente")
-            continue
-        actual = df[col].dtype
-        if actual == pl.Null and col in NULLABLE_COLUMNS:
-            continue
-        if actual != expected_dtype:
-            errors.append(f"{col}: attendu {expected_dtype}, obtenu {actual}")
-    return errors
+    try:
+        _, failure = SitgGeocodeSchema.filter(df, cast=True)
+    except Exception as e:
+        return [str(e)]
+    if failure.counts():
+        return [f"{rule}: {count} ligne(s) invalide(s)" for rule, count in failure.counts().items()]
+    return []
 
 
 async def _fetch_one(
@@ -146,8 +123,9 @@ async def _fetch_one(
                 "SITG_EST_EPSG_2056": coordinates.get("x"),
                 "SITG_NORD_EPSG_2056": coordinates.get("y"),
             }
+        logger.warning("Adresse introuvable (aucun résultat SITG) : '{}'", adresse)
     except Exception as e:
-        logger.warning("Geocoding failed for '%s': %s", adresse, e)
+        logger.warning("Échec de la requête de géocodage pour '{}' : {}", adresse, e)
     return _EMPTY_RESULT.copy()
 
 
@@ -168,8 +146,8 @@ async def sitg_geocode_async(
     min_score_threshold: seuil minimum de score pour considérer un résultat comme valide
     Retourne
     --------
-    DataFrame avec la colonne adresse + les champs SITG définis dans EXPECTED_SCHEMA.
-    Les types sont validés et loggés si un écart est détecté.
+    DataFrame avec la colonne adresse + les champs SITG définis dans SitgGeocodeSchema.
+    Les types sont validés (et castés) et les écarts éventuels sont loggés.
     """
     adresses = df[col_adresse].to_list()
 
@@ -178,21 +156,35 @@ async def sitg_geocode_async(
         tasks = [_fetch_one(session, semaphore, addr) for addr in adresses]
         results = await tqdm.gather(*tasks, desc="Geocoding SITG")
 
-    result = pl.DataFrame(
-        {col_adresse: adresses, **{f: [r[f] for r in results] for f in _RESULT_FIELDS}},
+    sitg_fields = pl.DataFrame(
+        {f: [r[f] for r in results] for f in _RESULT_FIELDS},
         infer_schema_length=None,
-    ).with_columns(
-        # NPA et EGID sont retournés en String par l'API
-        pl.col("SITG_NPA", "SITG_EGID").cast(pl.Int64),
     )
+    # NPA et EGID sont retournés en String par l'API : dataframely les caste en Int64
+    # et vérifie au passage que toutes les colonnes/types attendus sont bien présents.
+    sitg_fields = SitgGeocodeSchema.cast(sitg_fields)
 
-    schema_errors = validate_schema(result)
-    for err in schema_errors:
-        logger.warning("Geocode schema mismatch: %s", err)
+    # Les règles de contenu (ex. score dans [0, 100]) ne bloquent jamais le résultat :
+    # elles sont uniquement loguées, pour ne pas faire disparaître de lignes en silence.
+    _, failure = SitgGeocodeSchema.filter(sitg_fields)
+    for rule, count in failure.counts().items():
+        logger.warning("Règle de schéma violée '{}' : {} ligne(s)", rule, count)
+
+    result = pl.DataFrame({col_adresse: adresses}).hstack(sitg_fields)
 
     # Appliquer un filtre de score minimum si spécifié
     if min_score_threshold > 0:
         result = result.filter(pl.col("SITG_SCORE") >= min_score_threshold)
+
+    n_not_found = sum(1 for r in results if r == _EMPTY_RESULT)
+    if n_not_found:
+        logger.warning(
+            "{}/{} adresse(s) non géocodée(s) (voir les avertissements ci-dessus)",
+            n_not_found,
+            len(results),
+        )
+    else:
+        logger.info("{}/{} adresse(s) géocodée(s) avec succès", len(results), len(results))
 
     return result
 

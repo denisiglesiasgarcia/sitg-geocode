@@ -184,6 +184,7 @@ colorama==0.4.6 ; sys_platform == 'win32' \
     # via
     #   click
     #   ipython
+    #   loguru
     #   rich-click
     #   tqdm
 comm==0.2.3 \
@@ -192,6 +193,14 @@ comm==0.2.3 \
     # via
     #   ipykernel
     #   ipywidgets
+dataframely==2.11.0 \
+    --hash=sha256:0de2ff87b01c46b0691d91a0fc40c2e134b4be1eabe447e8ecff47a56119d5a6 \
+    --hash=sha256:4036fcf7a7b5c68c62f755d9b4e183786df63ef23defb0ceae0079cf8c09203a \
+    --hash=sha256:7ca6ab8deee474e0a6bea18abd5c14d3afc5797dccbaf24f7292cda8da624942 \
+    --hash=sha256:91b368ce7b3d0408d9f181f7967e316eaff9e56fb13493a1e6de071ca1df342d \
+    --hash=sha256:9a7d15a4831a1a7715afeac1673ec9ce3d6cb6ef09070df9ec0f4ac54fc23ff9 \
+    --hash=sha256:aa62ca3dfcb4396d2045319db3d1fbaba96c7bdffcdc0f76bd47eca5a8a6e4e4
+    # via sitg-geocode
 debugpy==1.8.21 \
     --hash=sha256:13678151fc401e2d68c9880b91e28714f797d40422994572b24560ef80910a88 \
     --hash=sha256:15d4963bd5ffa48f0da0947fd06757fa7621945048a14ad7705431566d3c0e7c \
@@ -309,6 +318,10 @@ frozenlist==1.8.0 \
     # via
     #   aiohttp
     #   aiosignal
+fsspec==2026.6.0 \
+    --hash=sha256:02e0b71817df9b2169dc30a16832045764def1191b43dcff5bb85bdee212d2a1 \
+    --hash=sha256:f5bac145310fe30e16e1471bd6840b2d990d609e872251d7e674241822abf01a
+    # via dataframely
 h11==0.16.0 \
     --hash=sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1 \
     --hash=sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86
@@ -366,6 +379,10 @@ jupyterlab-widgets==3.0.16 \
     --hash=sha256:423da05071d55cf27a9e602216d35a3a65a3e41cdf9c5d3b643b814ce38c19e0 \
     --hash=sha256:45fa36d9c6422cf2559198e4db481aa243c7a32d9926b500781c830c80f7ecf8
     # via ipywidgets
+loguru==0.7.3 \
+    --hash=sha256:19480589e77d47b8d85b2c827ad95d49bf31b0dcde16593892eb51dd18706eb6 \
+    --hash=sha256:31a33c10c8e1e10422bfd431aeb5d351c7cf7fa671e3c4df004162264b28220c
+    # via sitg-geocode
 markdown-it-py==4.2.0 \
     --hash=sha256:04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49 \
     --hash=sha256:9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a
@@ -500,7 +517,9 @@ numpy==2.5.1 \
     --hash=sha256:f089d7b00756190aacf1f5d34bdf38c3c430ac82b4f868f8cede73380460fce7 \
     --hash=sha256:f2479a47f8d5932d1718168a681ad6e536a9df484c83cfcf9de365e164537ace \
     --hash=sha256:f7feb014281029e628ba2d5a007407443b06e418b6fe451d1e2adcbc8eba0107
-    # via pandas
+    # via
+    #   dataframely
+    #   pandas
 packaging==26.2 \
     --hash=sha256:5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e \
     --hash=sha256:ff452ff5a3e828ce110190feff1178bb1f2ea2281fa2075aadb987c2fb221661
@@ -556,7 +575,9 @@ platformdirs==4.10.0 \
 polars==1.42.1 \
     --hash=sha256:2fe94f3059334650bd850ae19a9c165dcd5d9cb12cd95ea04de2201662e70e8a \
     --hash=sha256:3c0c65cdfa21a621650c4bdcbbccf93964d052fd766c3e70e84a55d961c259fd
-    # via sitg-geocode
+    # via
+    #   dataframely
+    #   sitg-geocode
 polars-runtime-32==1.42.1 \
     --hash=sha256:4d4809e1c1b9a6611f6944f27b24abea902b5159e6b6fa262fd716e947af5afd \
     --hash=sha256:635d9dbcae2302ae223afb395d5cd220bffa61a53d0ab6871d17c8bc830101cf \
@@ -948,6 +969,10 @@ widgetsnbextension==4.0.15 \
     --hash=sha256:8156704e4346a571d9ce73b84bee86a29906c9abfd7223b7228a28899ccf3366 \
     --hash=sha256:de8610639996f1567952d763a5a41af8af37f2575a41f9852a38f947eb82a3b9
     # via ipywidgets
+win32-setctime==1.2.0 ; sys_platform == 'win32' \
+    --hash=sha256:95d644c4e708aba81dc3704a116d8cbc974d70b3bdb8be1d150e36be6e9d1390 \
+    --hash=sha256:ae1fdf948f5640aae05c511ade119313fb6a30d7eabe25fef9764dca5873c4c0
+    # via loguru
 yarl==1.24.2 \
     --hash=sha256:0063adad533e57171b79db3943b229d40dfafeeee579767f96541f106bac5f1b \
     --hash=sha256:081c2bf54efe03774d0311172bc04fedf9ca01e644d4cd8c805688e527209bdc \

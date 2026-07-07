@@ -302,6 +302,24 @@ wheels = [
 ]
 
 [[package]]
+name = "dataframely"
+version = "2.11.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "fsspec" },
+    { name = "numpy" },
+    { name = "polars" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6d/18/94278123698c1947b39c0e9edeb3b75ea78884f0718c2bff6d1292257ca0/dataframely-2.11.0.tar.gz", hash = "sha256:91b368ce7b3d0408d9f181f7967e316eaff9e56fb13493a1e6de071ca1df342d", size = 455813, upload-time = "2026-07-01T16:47:58.862Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/57/c2/dce9ada639bfef04ea7369382f7a1c705c987d407f76a0e80e5b8b89d532/dataframely-2.11.0-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:9a7d15a4831a1a7715afeac1673ec9ce3d6cb6ef09070df9ec0f4ac54fc23ff9", size = 8238023, upload-time = "2026-07-01T16:47:47.115Z" },
+    { url = "https://files.pythonhosted.org/packages/62/1d/7ea662c2fca127420207eecfdd7d491e1cdc60cae4509fa3262c531fd940/dataframely-2.11.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:0de2ff87b01c46b0691d91a0fc40c2e134b4be1eabe447e8ecff47a56119d5a6", size = 7630079, upload-time = "2026-07-01T16:47:49.675Z" },
+    { url = "https://files.pythonhosted.org/packages/5f/4c/000909af5242d7093243a1a6d183b82a80e27e682fbe57c90e51a0cf6e4f/dataframely-2.11.0-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7ca6ab8deee474e0a6bea18abd5c14d3afc5797dccbaf24f7292cda8da624942", size = 8009433, upload-time = "2026-07-01T16:47:51.722Z" },
+    { url = "https://files.pythonhosted.org/packages/07/bd/2088125322507287a75b7aaca9ae84b3caf4148ee71bfd307eb2f2e12f69/dataframely-2.11.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4036fcf7a7b5c68c62f755d9b4e183786df63ef23defb0ceae0079cf8c09203a", size = 8574244, upload-time = "2026-07-01T16:47:53.922Z" },
+    { url = "https://files.pythonhosted.org/packages/94/f8/1d12d6b0e2d93250bab7febff817f7e753917ca36ba4356c82ef48619748/dataframely-2.11.0-cp310-abi3-win_amd64.whl", hash = "sha256:aa62ca3dfcb4396d2045319db3d1fbaba96c7bdffcdc0f76bd47eca5a8a6e4e4", size = 8631969, upload-time = "2026-07-01T16:47:56.503Z" },
+]
+
+[[package]]
 name = "debugpy"
 version = "1.8.21"
 source = { registry = "https://pypi.org/simple" }
@@ -448,6 +466,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/89/76/c615883b7b521ead2944bb3480398cbb07e12b7b4e4d073d3752eb721558/frozenlist-1.8.0-cp314-cp314t-win_amd64.whl", hash = "sha256:06be8f67f39c8b1dc671f5d83aaefd3358ae5cdcf8314552c57e7ed3e6475bdd", size = 49451, upload-time = "2025-10-06T05:37:53.425Z" },
     { url = "https://files.pythonhosted.org/packages/e0/a3/5982da14e113d07b325230f95060e2169f5311b1017ea8af2a29b374c289/frozenlist-1.8.0-cp314-cp314t-win_arm64.whl", hash = "sha256:102e6314ca4da683dca92e3b1355490fed5f313b768500084fbe6371fddfdb79", size = 42507, upload-time = "2025-10-06T05:37:54.513Z" },
     { url = "https://files.pythonhosted.org/packages/9a/9a/e35b4a917281c0b8419d4207f4334c8e8c5dbf4f3f5f9ada73958d937dcc/frozenlist-1.8.0-py3-none-any.whl", hash = "sha256:0c18a16eab41e82c295618a77502e17b195883241c563b00f0aa5106fc4eaa0d", size = 13409, upload-time = "2025-10-06T05:38:16.721Z" },
+]
+
+[[package]]
+name = "fsspec"
+version = "2026.6.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/10/a1/ae4e3e5003468d6391d2c77b6fa1cd73bd5d13511d81c642d7b28ac90ed4/fsspec-2026.6.0.tar.gz", hash = "sha256:f5bac145310fe30e16e1471bd6840b2d990d609e872251d7e674241822abf01a", size = 313646, upload-time = "2026-06-16T01:57:28.105Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e5/22/4222d7ddf3da30f363edaa98e329c2bce6c65497c9cb2810931c8b2c0fbc/fsspec-2026.6.0-py3-none-any.whl", hash = "sha256:02e0b71817df9b2169dc30a16832045764def1191b43dcff5bb85bdee212d2a1", size = 203949, upload-time = "2026-06-16T01:57:26.358Z" },
 ]
 
 [[package]]
@@ -628,6 +655,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/26/2d/ef58fed122b268c69c0aa099da20bc67657cdfb2e222688d5731bd5b971d/jupyterlab_widgets-3.0.16.tar.gz", hash = "sha256:423da05071d55cf27a9e602216d35a3a65a3e41cdf9c5d3b643b814ce38c19e0", size = 897423, upload-time = "2025-11-01T21:11:29.724Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ab/b5/36c712098e6191d1b4e349304ef73a8d06aed77e56ceaac8c0a306c7bda1/jupyterlab_widgets-3.0.16-py3-none-any.whl", hash = "sha256:45fa36d9c6422cf2559198e4db481aa243c7a32d9926b500781c830c80f7ecf8", size = 914926, upload-time = "2025-11-01T21:11:28.008Z" },
+]
+
+[[package]]
+name = "loguru"
+version = "0.7.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "win32-setctime", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3a/05/a1dae3dffd1116099471c643b8924f5aa6524411dc6c63fdae648c4f1aca/loguru-0.7.3.tar.gz", hash = "sha256:19480589e77d47b8d85b2c827ad95d49bf31b0dcde16593892eb51dd18706eb6", size = 63559, upload-time = "2024-12-06T11:20:56.608Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0c/29/0348de65b8cc732daa3e33e67806420b2ae89bdce2b04af740289c5c6c8c/loguru-0.7.3-py3-none-any.whl", hash = "sha256:31a33c10c8e1e10422bfd431aeb5d351c7cf7fa671e3c4df004162264b28220c", size = 61595, upload-time = "2024-12-06T11:20:54.538Z" },
 ]
 
 [[package]]
@@ -1346,10 +1386,12 @@ wheels = [
 
 [[package]]
 name = "sitg-geocode"
-version = "0.1.14"
+version = "0.1.16"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
+    { name = "dataframely" },
+    { name = "loguru" },
     { name = "polars" },
     { name = "tqdm" },
 ]
@@ -1368,6 +1410,8 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.5" },
+    { name = "dataframely", specifier = ">=2.11.0" },
+    { name = "loguru", specifier = ">=0.7.3" },
     { name = "polars", specifier = ">=1.40.1" },
     { name = "tqdm", specifier = ">=4.67.3" },
 ]
@@ -1535,6 +1579,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/bd/f4/c67440c7fb409a71b7404b7aefcd7569a9c0d6bd071299bf4198ae7a5d95/widgetsnbextension-4.0.15.tar.gz", hash = "sha256:de8610639996f1567952d763a5a41af8af37f2575a41f9852a38f947eb82a3b9", size = 1097402, upload-time = "2025-11-01T21:15:55.178Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3f/0e/fa3b193432cfc60c93b42f3be03365f5f909d2b3ea410295cf36df739e31/widgetsnbextension-4.0.15-py3-none-any.whl", hash = "sha256:8156704e4346a571d9ce73b84bee86a29906c9abfd7223b7228a28899ccf3366", size = 2196503, upload-time = "2025-11-01T21:15:53.565Z" },
+]
+
+[[package]]
+name = "win32-setctime"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/8f/705086c9d734d3b663af0e9bb3d4de6578d08f46b1b101c2442fd9aecaa2/win32_setctime-1.2.0.tar.gz", hash = "sha256:ae1fdf948f5640aae05c511ade119313fb6a30d7eabe25fef9764dca5873c4c0", size = 4867, upload-time = "2024-12-07T15:28:28.314Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e1/07/c6fe3ad3e685340704d314d765b7912993bcb8dc198f0e7a89382d37974b/win32_setctime-1.2.0-py3-none-any.whl", hash = "sha256:95d644c4e708aba81dc3704a116d8cbc974d70b3bdb8be1d150e36be6e9d1390", size = 4083, upload-time = "2024-12-07T15:28:26.465Z" },
 ]
 
 [[package]]
