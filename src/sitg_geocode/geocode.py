@@ -212,19 +212,47 @@ async def sitg_geocode_async(
 
     result = pl.DataFrame({col_adresse: adresses}).hstack(sitg_fields)
 
-    # Appliquer un filtre de score minimum si spécifié
-    if min_score_threshold > 0:
-        result = result.filter(pl.col("SITG_SCORE") >= min_score_threshold)
+    n_total = len(adresses)
+    n_no_match = sum(1 for r in results if r == _EMPTY_RESULT)
 
-    n_not_found = sum(1 for r in results if r == _EMPTY_RESULT)
-    if n_not_found:
-        logger.warning(
-            "{}/{} adresse(s) non géocodée(s) (voir les avertissements ci-dessus)",
-            n_not_found,
-            len(results),
+    # Appliquer un filtre de score minimum si spécifié : ceci retire des lignes du résultat,
+    # donc le résumé ci-dessous doit être calculé après ce filtre pour rester exact.
+    if min_score_threshold > 0:
+        below_threshold = result.filter(
+            pl.col("SITG_SCORE").is_not_null() & (pl.col("SITG_SCORE") < min_score_threshold)
         )
+        for row in below_threshold.iter_rows(named=True):
+            logger.warning(
+                "Aucune correspondance suffisante pour '{}' (seuil {}) : "
+                "meilleure proposition '{}' avec un score de {}",
+                row[col_adresse],
+                min_score_threshold,
+                row["SITG_ADRESSE"],
+                row["SITG_SCORE"],
+            )
+        n_below_threshold = below_threshold.height
+        result = result.filter(pl.col("SITG_SCORE") >= min_score_threshold)
     else:
-        logger.info("{}/{} adresse(s) géocodée(s) avec succès", len(results), len(results))
+        n_below_threshold = 0
+
+    n_kept = result.height
+    if n_no_match:
+        logger.warning(
+            "{}/{} adresse(s) sans résultat SITG (voir les avertissements ci-dessus)",
+            n_no_match,
+            n_total,
+        )
+    if n_below_threshold:
+        logger.warning(
+            "{}/{} adresse(s) trouvée(s) mais exclue(s) (score < {})",
+            n_below_threshold,
+            n_total,
+            min_score_threshold,
+        )
+    if n_kept == n_total:
+        logger.info("{}/{} adresse(s) géocodée(s) avec succès", n_kept, n_total)
+    else:
+        logger.info("{}/{} adresse(s) conservée(s) dans le résultat final", n_kept, n_total)
 
     return result
 

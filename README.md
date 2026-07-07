@@ -166,5 +166,5 @@ if errors:
 ## Notes
 
 - Le géocodage est asynchrone : utiliser `await` ou `asyncio.run()` selon le contexte.
-- Le paramètre `min_score_threshold` filtre les lignes dont le score est inférieur au seuil ; les adresses non retrouvées (score `null`) sont également exclues.
+- Le paramètre `min_score_threshold` filtre les lignes dont le score est inférieur au seuil ; les adresses non retrouvées (score `null`) sont également exclues. Chaque adresse exclue pour cause de score insuffisant génère un avertissement loggé avec l'adresse d'origine et la meilleure proposition trouvée (avec son score).
 - Les champs `SITG_NPA` et `SITG_EGID` sont retournés en `String` par l'API et automatiquement convertis en `Int64`.
