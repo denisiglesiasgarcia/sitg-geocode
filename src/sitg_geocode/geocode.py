@@ -16,12 +16,18 @@ Résultats retournés
 Colonne                 Description
 ----------------------  --------------------------------------------------
 col_adresse             Adresse originale (clé de jointure)
+SITG_ADRESSE_ID         Identifiant interne de l'adresse (API)
 SITG_ADRESSE            Adresse normalisée SITG
 SITG_NPA                Code postal
+SITG_NOM_NPA            Nom de la localité
 SITG_COMMUNE            Commune
+SITG_TYPE               Statut du bâtiment (ex. Existante, Projetée)
+SITG_CANTON             Division administrative (ex. Canton de Genève)
+SITG_PAYS               Pays
 SITG_EGID               Identifiant fédéral du bâtiment (RegBL)
 SITG_EGRID              Identifiant fédéral de l'immeuble (RF)
 SITG_SCORE              Score de confiance du géocodage (0–100)
+SITG_PROVIDER           Source des données (ex. SITG, RegBL)
 SITG_LON / SITG_LAT     Coordonnées géographiques WGS84
 SITG_EST_EPSG_2056      Coordonnée Est  LV95 / EPSG:2056
 SITG_NORD_EPSG_2056     Coordonnée Nord LV95 / EPSG:2056
@@ -40,13 +46,18 @@ logger = logging.getLogger(__name__)
 API_URL = "https://geocodage.sitg-lab.ch/api/v2/search"
 
 _RESULT_FIELDS = [
+    "SITG_ADRESSE_ID",
     "SITG_ADRESSE",
     "SITG_NPA",
     "SITG_NOM_NPA",
     "SITG_COMMUNE",
+    "SITG_TYPE",
+    "SITG_CANTON",
+    "SITG_PAYS",
     "SITG_EGID",
     "SITG_EGRID",
     "SITG_SCORE",
+    "SITG_PROVIDER",
     "SITG_LON",
     "SITG_LAT",
     "SITG_EST_EPSG_2056",
@@ -57,13 +68,18 @@ _EMPTY_RESULT = {f: None for f in _RESULT_FIELDS}
 
 # Schéma attendu après transformation — source de vérité
 EXPECTED_SCHEMA: dict[str, type[pl.DataType]] = {
+    "SITG_ADRESSE_ID": pl.String,
     "SITG_ADRESSE": pl.String,
     "SITG_NPA": pl.Int64,
     "SITG_NOM_NPA": pl.String,
     "SITG_COMMUNE": pl.String,
+    "SITG_TYPE": pl.String,
+    "SITG_CANTON": pl.String,
+    "SITG_PAYS": pl.String,
     "SITG_EGID": pl.Int64,
     "SITG_EGRID": pl.String,
     "SITG_SCORE": pl.Float64,
+    "SITG_PROVIDER": pl.String,
     "SITG_LON": pl.Float64,
     "SITG_LAT": pl.Float64,
     "SITG_EST_EPSG_2056": pl.Float64,
@@ -106,19 +122,25 @@ async def _fetch_one(
         if data.get("hits"):
             hit = data["hits"][0]
             coordinates = hit.get("coordinates") or {}
+            data_source = hit.get("dataSource") or {}
             street_name = hit.get("streetName")
             house_number = hit.get("houseNumber")
             sitg_adresse = (
                 f"{street_name} {house_number}".strip() if street_name or house_number else None
             )
             return {
+                "SITG_ADRESSE_ID": hit.get("addressId"),
                 "SITG_ADRESSE": sitg_adresse,
                 "SITG_NPA": hit.get("postalCode"),
                 "SITG_NOM_NPA": hit.get("locality"),
                 "SITG_COMMUNE": hit.get("municipality"),
+                "SITG_TYPE": hit.get("type"),
+                "SITG_CANTON": hit.get("administrativeDivision"),
+                "SITG_PAYS": hit.get("country"),
                 "SITG_EGID": hit.get("EGID"),
                 "SITG_EGRID": hit.get("EGRID"),
                 "SITG_SCORE": hit.get("score"),
+                "SITG_PROVIDER": data_source.get("provider"),
                 "SITG_LON": hit.get("longitude"),
                 "SITG_LAT": hit.get("latitude"),
                 "SITG_EST_EPSG_2056": coordinates.get("x"),
