@@ -37,7 +37,7 @@ from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
 
-API_URL = "https://geocodage.sitg-lab.ch/api/search"
+API_URL = "https://geocodage.sitg-lab.ch/api/v2/search"
 
 _RESULT_FIELDS = [
     "SITG_ADRESSE",
@@ -105,18 +105,24 @@ async def _fetch_one(
             data = await resp.json()
         if data.get("hits"):
             hit = data["hits"][0]
+            coordinates = hit.get("coordinates") or {}
+            street_name = hit.get("streetName")
+            house_number = hit.get("houseNumber")
+            sitg_adresse = (
+                f"{street_name} {house_number}".strip() if street_name or house_number else None
+            )
             return {
-                "SITG_ADRESSE": hit.get("ADRESSE"),
-                "SITG_NPA": hit.get("NO_POSTAL"),
-                "SITG_NOM_NPA": hit.get("NOM_NPA"),
-                "SITG_COMMUNE": hit.get("COMMUNE"),
+                "SITG_ADRESSE": sitg_adresse,
+                "SITG_NPA": hit.get("postalCode"),
+                "SITG_NOM_NPA": hit.get("locality"),
+                "SITG_COMMUNE": hit.get("municipality"),
                 "SITG_EGID": hit.get("EGID"),
                 "SITG_EGRID": hit.get("EGRID"),
                 "SITG_SCORE": hit.get("score"),
                 "SITG_LON": hit.get("longitude"),
                 "SITG_LAT": hit.get("latitude"),
-                "SITG_EST_EPSG_2056": hit.get("easting"),
-                "SITG_NORD_EPSG_2056": hit.get("northing"),
+                "SITG_EST_EPSG_2056": coordinates.get("x"),
+                "SITG_NORD_EPSG_2056": coordinates.get("y"),
             }
     except Exception as e:
         logger.warning("Geocoding failed for '%s': %s", adresse, e)
@@ -183,4 +189,4 @@ async def inspect_sitg_response(adresse: str, **params_override: str) -> None:
         session.get(API_URL, params=params) as resp,
     ):
         data = await resp.json()
-    print(json.dumps(data, indent=2, ensure_ascii=False))
+    print(json.dumps(obj=data, indent=2, ensure_ascii=False))
