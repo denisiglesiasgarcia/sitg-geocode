@@ -50,15 +50,15 @@ API_URL = "https://geocodage.sitg-lab.ch/api/v2/search"
 class SitgGeocodeSchema(dy.Schema):
     SITG_ADRESSE_ID = dy.String(nullable=True)
     SITG_ADRESSE = dy.String(nullable=True)
-    SITG_NPA = dy.Int64(nullable=True, min=1200, max=1299)
+    SITG_NPA = dy.Int64(nullable=True)
     SITG_NOM_NPA = dy.String(nullable=True)
     SITG_COMMUNE = dy.String(nullable=True)
     SITG_TYPE = dy.String(nullable=True)
     SITG_CANTON = dy.String(nullable=True)
     SITG_PAYS = dy.String(nullable=True)
-    SITG_EGID = dy.Int64(nullable=False, min=10000)
+    SITG_EGID = dy.Int64(nullable=True)
     SITG_EGRID = dy.String(nullable=True)
-    SITG_SCORE = dy.Float64(nullable=False, min=0.0, max=100.0)
+    SITG_SCORE = dy.Float64(nullable=True, min=0.0, max=100.0)
     SITG_PROVIDER = dy.String(nullable=True)
     SITG_LON = dy.Float64(nullable=True)
     SITG_LAT = dy.Float64(nullable=True)
@@ -85,45 +85,79 @@ def validate_schema(df: pl.DataFrame) -> list[str]:
     return []
 
 
+def _select_hit(hits: list[dict], npa_range: tuple[int, int] | None) -> dict | None:
+    """Sélectionne le premier hit dont le NPA tombe dans npa_range (ou le meilleur hit si None)."""
+    if not hits:
+        return None
+    if npa_range is None:
+        return hits[0]
+    npa_min, npa_max = npa_range
+    for hit in hits:
+        try:
+            npa = int(hit.get("postalCode"))
+        except (TypeError, ValueError):
+            continue
+        if npa_min <= npa <= npa_max:
+            return hit
+    return None
+
+
+def _hit_to_result(hit: dict) -> dict:
+    coordinates = hit.get("coordinates") or {}
+    data_source = hit.get("dataSource") or {}
+    street_name = hit.get("streetName")
+    house_number = hit.get("houseNumber")
+    sitg_adresse = f"{street_name} {house_number}".strip() if street_name or house_number else None
+    return {
+        "SITG_ADRESSE_ID": hit.get("addressId"),
+        "SITG_ADRESSE": sitg_adresse,
+        "SITG_NPA": hit.get("postalCode"),
+        "SITG_NOM_NPA": hit.get("locality"),
+        "SITG_COMMUNE": hit.get("municipality"),
+        "SITG_TYPE": hit.get("type"),
+        "SITG_CANTON": hit.get("administrativeDivision"),
+        "SITG_PAYS": hit.get("country"),
+        "SITG_EGID": hit.get("EGID"),
+        "SITG_EGRID": hit.get("EGRID"),
+        "SITG_SCORE": hit.get("score"),
+        "SITG_PROVIDER": data_source.get("provider"),
+        "SITG_LON": hit.get("longitude"),
+        "SITG_LAT": hit.get("latitude"),
+        "SITG_EST_EPSG_2056": coordinates.get("x"),
+        "SITG_NORD_EPSG_2056": coordinates.get("y"),
+    }
+
+
 async def _fetch_one(
     session: aiohttp.ClientSession,
     semaphore: asyncio.Semaphore,
     adresse: str,
+    npa_range: tuple[int, int] | None = None,
 ) -> dict:
-    """Geocode une adresse et retourne les champs du meilleur résultat."""
-    params = {"q": adresse, "limit": "1", "offset": "0", "suggest": "false"}
+    """Geocode une adresse et retourne les champs du
+    meilleur résultat dans npa_range (si fourni)."""
+    # Avec une restriction NPA, on demande plusieurs candidats : le premier résultat de l'API
+    # n'est pas forcément dans la plage voulue (ex. une adresse française mieux scorée).
+    limit = 10 if npa_range is not None else 1
+    params = {"q": adresse, "limit": str(limit), "offset": "0", "suggest": "false"}
     try:
         async with semaphore, session.get(API_URL, params=params) as resp:
             resp.raise_for_status()
             data = await resp.json()
-        if data.get("hits"):
-            hit = data["hits"][0]
-            coordinates = hit.get("coordinates") or {}
-            data_source = hit.get("dataSource") or {}
-            street_name = hit.get("streetName")
-            house_number = hit.get("houseNumber")
-            sitg_adresse = (
-                f"{street_name} {house_number}".strip() if street_name or house_number else None
+        hits = data.get("hits") or []
+        hit = _select_hit(hits, npa_range)
+        if hit is not None:
+            return _hit_to_result(hit)
+        if hits and npa_range is not None:
+            logger.warning(
+                "Aucun résultat dans la plage NPA {}-{} pour '{}' ({} résultat(s) hors plage)",
+                npa_range[0],
+                npa_range[1],
+                adresse,
+                len(hits),
             )
-            return {
-                "SITG_ADRESSE_ID": hit.get("addressId"),
-                "SITG_ADRESSE": sitg_adresse,
-                "SITG_NPA": hit.get("postalCode"),
-                "SITG_NOM_NPA": hit.get("locality"),
-                "SITG_COMMUNE": hit.get("municipality"),
-                "SITG_TYPE": hit.get("type"),
-                "SITG_CANTON": hit.get("administrativeDivision"),
-                "SITG_PAYS": hit.get("country"),
-                "SITG_EGID": hit.get("EGID"),
-                "SITG_EGRID": hit.get("EGRID"),
-                "SITG_SCORE": hit.get("score"),
-                "SITG_PROVIDER": data_source.get("provider"),
-                "SITG_LON": hit.get("longitude"),
-                "SITG_LAT": hit.get("latitude"),
-                "SITG_EST_EPSG_2056": coordinates.get("x"),
-                "SITG_NORD_EPSG_2056": coordinates.get("y"),
-            }
-        logger.warning("Adresse introuvable (aucun résultat SITG) : '{}'", adresse)
+        else:
+            logger.warning("Adresse introuvable (aucun résultat SITG) : '{}'", adresse)
     except Exception as e:
         logger.warning("Échec de la requête de géocodage pour '{}' : {}", adresse, e)
     return _EMPTY_RESULT.copy()
@@ -134,6 +168,7 @@ async def sitg_geocode_async(
     col_adresse: str,
     max_concurrent: int = 10,
     min_score_threshold: float = 0.0,
+    npa_range: tuple[int, int] | None = None,
 ) -> pl.DataFrame:
     """
     Géocode une colonne d'adresses via l'API SITG Lab.
@@ -144,6 +179,11 @@ async def sitg_geocode_async(
     col_adresse   : nom de la colonne contenant les adresses
     max_concurrent: nombre max de requêtes HTTP simultanées
     min_score_threshold: seuil minimum de score pour considérer un résultat comme valide
+    npa_range     : (min, max) inclusif ; parmi les résultats retournés par l'API pour une
+                    adresse, ne retient que le premier dont le NPA tombe dans cette plage
+                    (ex. (1200, 1299) pour ne garder que le canton de Genève). Si aucun des
+                    résultats n'est dans la plage, l'adresse est considérée non géocodée.
+                    `None` (défaut) = pas de restriction géographique.
     Retourne
     --------
     DataFrame avec la colonne adresse + les champs SITG définis dans SitgGeocodeSchema.
@@ -153,7 +193,7 @@ async def sitg_geocode_async(
 
     semaphore = asyncio.Semaphore(max_concurrent)
     async with aiohttp.ClientSession() as session:
-        tasks = [_fetch_one(session, semaphore, addr) for addr in adresses]
+        tasks = [_fetch_one(session, semaphore, addr, npa_range) for addr in adresses]
         results = await tqdm.gather(*tasks, desc="Geocoding SITG")
 
     sitg_fields = pl.DataFrame(

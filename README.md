@@ -121,6 +121,7 @@ Résultat (`min_score_threshold=95`) :
 | `col_adresse`          | `str`             | —           | Nom de la colonne contenant les adresses à géocoder                         |
 | `max_concurrent`       | `int`             | `10`        | Nombre maximum de requêtes HTTP simultanées                                 |
 | `min_score_threshold`  | `float`           | `0.0`       | Score minimum pour conserver un résultat (0–100). `0.0` = conserver tout    |
+| `npa_range`            | `tuple[int, int] \| None` | `None` | Plage de NPA (inclusive). Parmi les résultats retournés par l'API pour une adresse, ne retient que le premier dont le NPA est dans cette plage (ex. `(1200, 1299)` pour ne garder que le canton de Genève, en écartant p. ex. une adresse française mieux scorée). Si aucun résultat n'est dans la plage, l'adresse est considérée non géocodée. `None` = pas de restriction géographique |
 
 ## Colonnes retournées
 
