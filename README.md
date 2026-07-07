@@ -101,7 +101,7 @@ df_resultat.write_csv("resultat.csv")
 print(df_resultat.head(5))
 ```
 
-Résultat (`min_score_threshold=95`) : 
+Résultat (`min_score_threshold=95`, `canton="Canton de Genève"` par défaut) : 
 
 | Rue et N° | SITG_ADRESSE | SITG_NPA | SITG_COMMUNE | SITG_TYPE | SITG_CANTON | SITG_PAYS | SITG_EGID | SITG_SCORE | SITG_PROVIDER |
 |-----------|--------------|----------|--------------|-----------|-------------|-----------|-----------|-----------|---------------|
@@ -109,9 +109,11 @@ Résultat (`min_score_threshold=95`) :
 | "37, sous Garan" | null | null | null | null | null | null | null | null | null |
 | "Ancienne route, 78" | null | null | null | null | null | null | null | null | null |
 | "Av de Thonex 30" | "Avenue de Thônex 30" | 1225 | "Chêne-Bourg" | "Existante" | "Canton de Genève" | "Suisse" | 295511715 | 100.0 | "SITG" |
-| "Av. Blanc, 5" | "Avenue du Mont Blanc 5" | 74950 | "Scionzier" | null | "Département de la Haute-Savoie" | "France" | null | 100.0 | "Base Adresse Nationale (BAN)" |
+| "Av. Blanc, 5" | null | null | null | null | null | null | null | null | null |
 
-> Avec `min_score_threshold=0` (aucun filtre), les 5 adresses trouvent bien une correspondance (scores 70–100), mais l'API v2 attribue des scores globalement plus bas que l'ancienne v1 pour les correspondances imparfaites (ex. "12 rue Jean-Charles Amat" → 75.47 au lieu de 95.83 précédemment). Si vous migrez depuis une version antérieure, réévaluez votre `min_score_threshold` plutôt que de réutiliser l'ancien seuil tel quel.
+> "Av. Blanc, 5" n'a que deux résultats côté API (France et canton de Vaud, aucun à Genève) : par défaut `canton="Canton de Genève"` exclut les deux, donc l'adresse est considérée non géocodée plutôt que de retourner une adresse française ou vaudoise.
+>
+> Par ailleurs, l'API v2 attribue des scores globalement plus bas que l'ancienne v1 pour les correspondances imparfaites (ex. "12 rue Jean-Charles Amat" → 75.47 au lieu de 95.83 précédemment). Si vous migrez depuis une version antérieure, réévaluez votre `min_score_threshold` plutôt que de réutiliser l'ancien seuil tel quel.
 
 ## Paramètres de `sitg_geocode_async`
 
@@ -121,7 +123,7 @@ Résultat (`min_score_threshold=95`) :
 | `col_adresse`          | `str`             | —           | Nom de la colonne contenant les adresses à géocoder                         |
 | `max_concurrent`       | `int`             | `10`        | Nombre maximum de requêtes HTTP simultanées                                 |
 | `min_score_threshold`  | `float`           | `0.0`       | Score minimum pour conserver un résultat (0–100). `0.0` = conserver tout    |
-| `npa_range`            | `tuple[int, int] \| None` | `None` | Plage de NPA (inclusive). Parmi les résultats retournés par l'API pour une adresse, ne retient que le premier dont le NPA est dans cette plage (ex. `(1200, 1299)` pour ne garder que le canton de Genève, en écartant p. ex. une adresse française mieux scorée). Si aucun résultat n'est dans la plage, l'adresse est considérée non géocodée. `None` = pas de restriction géographique |
+| `canton`               | `str \| None`     | `"Canton de Genève"` | Restreint `SITG_CANTON` à cette valeur exacte. Parmi les résultats retournés par l'API pour une adresse, ne retient que le premier dont le canton correspond (ex. écarte une adresse française ou vaudoise mieux scorée). Si aucun résultat ne correspond, l'adresse est considérée non géocodée. `None` = pas de restriction géographique |
 
 ## Colonnes retournées
 
@@ -146,7 +148,7 @@ Le DataFrame résultat de l'exemple `df_resultat` contient la colonne d'adresse 
 | `SITG_EST_EPSG_2056`   | `Float64`  | Coordonnée Est LV95 / EPSG:2056                      |
 | `SITG_NORD_EPSG_2056`  | `Float64`  | Coordonnée Nord LV95 / EPSG:2056                     |
 
-> `SITG_EGID`/`SITG_EGRID` peuvent être `null` même pour un résultat de haute confiance : certaines sources (ex. `Base Adresse Nationale (BAN)` pour les adresses françaises) ne fournissent pas ces identifiants fédéraux suisses. Utilisez `SITG_PROVIDER` pour comprendre pourquoi.
+> `SITG_EGID`/`SITG_EGRID` peuvent être `null` même pour un résultat de haute confiance : certaines sources (ex. `Base Adresse Nationale (BAN)` pour les adresses françaises) ne fournissent pas ces identifiants fédéraux suisses. Ceci ne devrait plus arriver avec le paramètre `canton` par défaut (qui exclut ces sources), mais reste possible si vous appelez `sitg_geocode_async` avec `canton=None`. Utilisez `SITG_PROVIDER` pour comprendre pourquoi.
 
 > Toutes les colonnes SITG sont nullables : si le géocodage échoue pour une adresse, les champs correspondants sont `null`.
 

@@ -85,19 +85,14 @@ def validate_schema(df: pl.DataFrame) -> list[str]:
     return []
 
 
-def _select_hit(hits: list[dict], npa_range: tuple[int, int] | None) -> dict | None:
-    """Sélectionne le premier hit dont le NPA tombe dans npa_range (ou le meilleur hit si None)."""
+def _select_hit(hits: list[dict], canton: str | None) -> dict | None:
+    """Sélectionne le premier hit dont le canton correspond (ou le meilleur hit si None)."""
     if not hits:
         return None
-    if npa_range is None:
+    if canton is None:
         return hits[0]
-    npa_min, npa_max = npa_range
     for hit in hits:
-        try:
-            npa = int(hit.get("postalCode"))
-        except (TypeError, ValueError):
-            continue
-        if npa_min <= npa <= npa_max:
+        if hit.get("administrativeDivision") == canton:
             return hit
     return None
 
@@ -132,27 +127,25 @@ async def _fetch_one(
     session: aiohttp.ClientSession,
     semaphore: asyncio.Semaphore,
     adresse: str,
-    npa_range: tuple[int, int] | None = None,
+    canton: str | None = None,
 ) -> dict:
-    """Geocode une adresse et retourne les champs du
-    meilleur résultat dans npa_range (si fourni)."""
-    # Avec une restriction NPA, on demande plusieurs candidats : le premier résultat de l'API
-    # n'est pas forcément dans la plage voulue (ex. une adresse française mieux scorée).
-    limit = 10 if npa_range is not None else 1
+    """Geocode une adresse et retourne les champs du meilleur résultat dans canton (si fourni)."""
+    # Avec une restriction de canton, on demande plusieurs candidats : le premier résultat
+    # de l'API n'est pas forcément dans le canton voulu (ex. une adresse française mieux scorée).
+    limit = 10 if canton is not None else 1
     params = {"q": adresse, "limit": str(limit), "offset": "0", "suggest": "false"}
     try:
         async with semaphore, session.get(API_URL, params=params) as resp:
             resp.raise_for_status()
             data = await resp.json()
         hits = data.get("hits") or []
-        hit = _select_hit(hits, npa_range)
+        hit = _select_hit(hits, canton)
         if hit is not None:
             return _hit_to_result(hit)
-        if hits and npa_range is not None:
+        if hits and canton is not None:
             logger.warning(
-                "Aucun résultat dans la plage NPA {}-{} pour '{}' ({} résultat(s) hors plage)",
-                npa_range[0],
-                npa_range[1],
+                "Aucun résultat dans '{}' pour '{}' ({} résultat(s) hors de ce canton)",
+                canton,
                 adresse,
                 len(hits),
             )
@@ -168,7 +161,7 @@ async def sitg_geocode_async(
     col_adresse: str,
     max_concurrent: int = 10,
     min_score_threshold: float = 0.0,
-    npa_range: tuple[int, int] | None = None,
+    canton: str | None = "Canton de Genève",
 ) -> pl.DataFrame:
     """
     Géocode une colonne d'adresses via l'API SITG Lab.
@@ -179,11 +172,11 @@ async def sitg_geocode_async(
     col_adresse   : nom de la colonne contenant les adresses
     max_concurrent: nombre max de requêtes HTTP simultanées
     min_score_threshold: seuil minimum de score pour considérer un résultat comme valide
-    npa_range     : (min, max) inclusif ; parmi les résultats retournés par l'API pour une
-                    adresse, ne retient que le premier dont le NPA tombe dans cette plage
-                    (ex. (1200, 1299) pour ne garder que le canton de Genève). Si aucun des
-                    résultats n'est dans la plage, l'adresse est considérée non géocodée.
-                    `None` (défaut) = pas de restriction géographique.
+    canton        : restreint SITG_CANTON à cette valeur exacte (ex. "Canton de Genève",
+                    la valeur par défaut). Parmi les résultats retournés par l'API pour une
+                    adresse, ne retient que le premier dont le canton correspond ; si aucun
+                    ne correspond (ex. seule une adresse française ou vaudoise est trouvée),
+                    l'adresse est considérée non géocodée. `None` = pas de restriction.
     Retourne
     --------
     DataFrame avec la colonne adresse + les champs SITG définis dans SitgGeocodeSchema.
@@ -193,7 +186,7 @@ async def sitg_geocode_async(
 
     semaphore = asyncio.Semaphore(max_concurrent)
     async with aiohttp.ClientSession() as session:
-        tasks = [_fetch_one(session, semaphore, addr, npa_range) for addr in adresses]
+        tasks = [_fetch_one(session, semaphore, addr, canton) for addr in adresses]
         results = await tqdm.gather(*tasks, desc="Geocoding SITG")
 
     sitg_fields = pl.DataFrame(
@@ -235,7 +228,7 @@ async def sitg_geocode_async(
     else:
         n_below_threshold = 0
 
-    n_kept = result.height
+    n_kept = n_total - n_no_match - n_below_threshold
     if n_no_match:
         logger.warning(
             "{}/{} adresse(s) sans résultat SITG (voir les avertissements ci-dessus)",
