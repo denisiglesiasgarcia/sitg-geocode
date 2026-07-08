@@ -124,6 +124,7 @@ Résultat (`min_score_threshold=95`, `canton="Canton de Genève"` par défaut) :
 | `max_concurrent`       | `int`             | `10`        | Nombre maximum de requêtes HTTP simultanées                                 |
 | `min_score_threshold`  | `float`           | `0.0`       | Score minimum pour conserver un résultat (0–100). `0.0` = conserver tout    |
 | `canton`               | `str \| None`     | `"Canton de Genève"` | Restreint `SITG_CANTON` à cette valeur exacte. Parmi les résultats retournés par l'API pour une adresse, ne retient que le premier dont le canton correspond (ex. écarte une adresse française ou vaudoise mieux scorée). Si aucun résultat ne correspond, l'adresse est considérée non géocodée. `None` = pas de restriction géographique |
+| `api_url`              | `str \| None`     | `None`      | URL de l'endpoint interrogé. `None` = `API_URL` (surchargeable via la variable d'environnement `SITG_GEOCODE_API_URL`). Permet de pointer sur un autre fournisseur compatible avec ce même format de réponse (`/api/v2/search`), ex. un déploiement local de [geocoder-service](https://github.com/denisiglesiasgarcia/geocoder-service) au lieu de l'API SITG Lab distante |
 
 ## Colonnes retournées
 

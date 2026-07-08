@@ -35,6 +35,7 @@ SITG_NORD_EPSG_2056     Coordonnée Nord LV95 / EPSG:2056
 
 import asyncio
 import json
+import os
 
 import aiohttp
 import dataframely as dy
@@ -42,7 +43,12 @@ import polars as pl
 from loguru import logger
 from tqdm.auto import tqdm
 
-API_URL = "https://geocodage.sitg-lab.ch/api/v2/search"
+# Surchargeable via la variable d'environnement SITG_GEOCODE_API_URL ou le
+# paramètre `api_url` de `sitg_geocode_async`/`inspect_sitg_response`, par ex.
+# pour pointer sur un déploiement local de geocoder-service
+# (https://github.com/.../geocoder-service), compatible avec ce même format
+# de réponse (endpoint `/api/v2/search`).
+API_URL = os.environ.get("SITG_GEOCODE_API_URL", "https://geocodage.sitg-lab.ch/api/v2/search")
 
 
 # Schéma attendu après transformation — source de vérité.
@@ -128,6 +134,7 @@ async def _fetch_one(
     semaphore: asyncio.Semaphore,
     adresse: str,
     canton: str | None = None,
+    api_url: str | None = None,
 ) -> dict:
     """Geocode une adresse et retourne les champs du meilleur résultat dans canton (si fourni)."""
     # Avec une restriction de canton, on demande plusieurs candidats : le premier résultat
@@ -135,7 +142,7 @@ async def _fetch_one(
     limit = 10 if canton is not None else 1
     params = {"q": adresse, "limit": str(limit), "offset": "0", "suggest": "false"}
     try:
-        async with semaphore, session.get(API_URL, params=params) as resp:
+        async with semaphore, session.get(api_url or API_URL, params=params) as resp:
             resp.raise_for_status()
             data = await resp.json()
         hits = data.get("hits") or []
@@ -162,9 +169,10 @@ async def sitg_geocode_async(
     max_concurrent: int = 10,
     min_score_threshold: float = 0.0,
     canton: str | None = "Canton de Genève",
+    api_url: str | None = None,
 ) -> pl.DataFrame:
     """
-    Géocode une colonne d'adresses via l'API SITG Lab.
+    Géocode une colonne d'adresses via l'API SITG Lab (ou un endpoint compatible).
 
     Paramètres
     ----------
@@ -177,6 +185,10 @@ async def sitg_geocode_async(
                     adresse, ne retient que le premier dont le canton correspond ; si aucun
                     ne correspond (ex. seule une adresse française ou vaudoise est trouvée),
                     l'adresse est considérée non géocodée. `None` = pas de restriction.
+    api_url       : URL de l'endpoint à interroger (défaut : `API_URL`, surchargeable
+                    aussi via la variable d'environnement `SITG_GEOCODE_API_URL`). Permet
+                    de pointer sur un autre fournisseur compatible avec ce format de réponse
+                    (ex. un déploiement local de geocoder-service).
     Retourne
     --------
     DataFrame avec la colonne adresse + les champs SITG définis dans SitgGeocodeSchema.
@@ -186,7 +198,7 @@ async def sitg_geocode_async(
 
     semaphore = asyncio.Semaphore(max_concurrent)
     async with aiohttp.ClientSession() as session:
-        tasks = [_fetch_one(session, semaphore, addr, canton) for addr in adresses]
+        tasks = [_fetch_one(session, semaphore, addr, canton, api_url) for addr in adresses]
         results = await tqdm.gather(*tasks, desc="Geocoding SITG")
 
     sitg_fields = pl.DataFrame(
@@ -250,9 +262,12 @@ async def sitg_geocode_async(
     return result
 
 
-async def inspect_sitg_response(adresse: str, **params_override: str) -> None:
+async def inspect_sitg_response(
+    adresse: str, api_url: str | None = None, **params_override: str
+) -> None:
     """Affiche la réponse brute de l'API pour une adresse donnée.
 
+    api_url permet de pointer sur un autre endpoint compatible (défaut : `API_URL`).
     params_override permet de remplacer/ajouter des paramètres de requête,
     par ex. inspect_sitg_response(adresse, suggest="true") pour comparer
     le comportement avec suggest=false.
@@ -261,7 +276,7 @@ async def inspect_sitg_response(adresse: str, **params_override: str) -> None:
     params.update(params_override)
     async with (
         aiohttp.ClientSession() as session,
-        session.get(API_URL, params=params) as resp,
+        session.get(api_url or API_URL, params=params) as resp,
     ):
         data = await resp.json()
     print(json.dumps(obj=data, indent=2, ensure_ascii=False))
