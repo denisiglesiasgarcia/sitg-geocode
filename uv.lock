@@ -1422,7 +1422,7 @@ wheels = [
 
 [[package]]
 name = "sitg-geocode"
-version = "0.1.23"
+version = "0.1.28"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },

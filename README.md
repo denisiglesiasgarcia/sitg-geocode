@@ -125,6 +125,7 @@ Résultat (`min_score_threshold=95`, `canton="Canton de Genève"` par défaut) :
 | `min_score_threshold`  | `float`           | `0.0`       | Score minimum pour conserver un résultat (0–100). `0.0` = conserver tout    |
 | `canton`               | `str \| None`     | `"Canton de Genève"` | Restreint `SITG_CANTON` à cette valeur exacte. Parmi les résultats retournés par l'API pour une adresse, ne retient que le premier dont le canton correspond (ex. écarte une adresse française ou vaudoise mieux scorée). Si aucun résultat ne correspond, l'adresse est considérée non géocodée. `None` = pas de restriction géographique |
 | `api_url`              | `str \| None`     | `None`      | URL de l'endpoint interrogé. `None` = `API_URL` (surchargeable via la variable d'environnement `SITG_GEOCODE_API_URL`). Permet de pointer sur un autre fournisseur compatible avec ce même format de réponse (`/api/v2/search`), ex. un déploiement local de [geocoder-service](https://github.com/denisiglesiasgarcia/geocoder-service) au lieu de l'API SITG Lab distante |
+| `column_prefix`        | `str`             | `"SITG_"`   | Préfixe des colonnes retournées. Utile pour distinguer visuellement la provenance quand on géocode la même donnée avec plusieurs fournisseurs (ex. `"GS_"` pour geocoder-service). La validation/cast interne reste basée sur le schéma canonique `SITG_*` ; passer le même `column_prefix` à `validate_schema` pour valider un résultat déjà renommé |
 
 ## Colonnes retournées
 
@@ -153,6 +154,28 @@ Le DataFrame résultat de l'exemple `df_resultat` contient la colonne d'adresse 
 
 > Toutes les colonnes SITG sont nullables : si le géocodage échoue pour une adresse, les champs correspondants sont `null`.
 
+## Utiliser un autre fournisseur (ex. geocoder-service)
+
+`API_URL` pointe par défaut sur l'API SITG Lab distante, mais tout endpoint
+qui répond au même format (`/api/v2/search`) peut être utilisé à la place —
+par exemple [geocoder-service](https://github.com/denisiglesiasgarcia/geocoder-service),
+un géocodeur auto-hébergé pour le canton de Genève. Aucun changement de code
+n'est nécessaire, seul l'endpoint change :
+
+```python
+result_geocode = await sitg_geocode_async(
+    df,
+    col_adresse="Rue et N°",
+    api_url="http://localhost:8000/api/v2/search",
+    column_prefix="GS_",  # optionnel : distingue les colonnes de ce fournisseur
+)
+```
+
+`api_url` peut aussi être fixé globalement via la variable d'environnement
+`SITG_GEOCODE_API_URL`, plutôt que par appel. Voir
+[`notebooks/sitg_labs_api.ipynb`](notebooks/sitg_labs_api.ipynb) pour un
+exemple exécutable comparant les deux fournisseurs sur le même jeu de test.
+
 ## Validation du schéma
 
 La fonction `validate_schema` permet de vérifier que le DataFrame respecte le schéma attendu. Elle est appelée automatiquement après chaque géocodage et logue les écarts éventuels. Elle peut aussi être utilisée manuellement :
@@ -171,3 +194,4 @@ if errors:
 - Le géocodage est asynchrone : utiliser `await` ou `asyncio.run()` selon le contexte.
 - Le paramètre `min_score_threshold` filtre les lignes dont le score est inférieur au seuil ; les adresses non retrouvées (score `null`) sont également exclues. Chaque adresse exclue pour cause de score insuffisant génère un avertissement loggé avec l'adresse d'origine et la meilleure proposition trouvée (avec son score).
 - Les champs `SITG_NPA` et `SITG_EGID` sont retournés en `String` par l'API et automatiquement convertis en `Int64`.
+- `api_url` (par appel) prime sur la variable d'environnement `SITG_GEOCODE_API_URL`, qui prime elle-même sur la valeur par défaut (l'API SITG Lab distante) — voir "Utiliser un autre fournisseur" ci-dessus.

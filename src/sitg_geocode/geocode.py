@@ -76,12 +76,20 @@ _RESULT_FIELDS = SitgGeocodeSchema.column_names()
 _EMPTY_RESULT = {f: None for f in _RESULT_FIELDS}
 
 
-def validate_schema(df: pl.DataFrame) -> list[str]:
+def validate_schema(df: pl.DataFrame, column_prefix: str = "SITG_") -> list[str]:
     """
     Vérifie que le DataFrame respecte SitgGeocodeSchema (colonnes, types, et
     règles de contenu comme le score dans [0, 100]) via dataframely.
     Retourne une liste d'erreurs (vide = OK).
+
+    column_prefix : préfixe utilisé sur les colonnes à valider (défaut : `"SITG_"`).
+    Si `df` a été produit avec un autre `column_prefix` (voir `sitg_geocode_async`),
+    passer la même valeur ici pour que les colonnes soient reconnues.
     """
+    if column_prefix != "SITG_":
+        df = df.rename(
+            {f.replace("SITG_", column_prefix, 1): f for f in _RESULT_FIELDS}, strict=False
+        )
     try:
         _, failure = SitgGeocodeSchema.filter(df, cast=True)
     except Exception as e:
@@ -170,6 +178,7 @@ async def sitg_geocode_async(
     min_score_threshold: float = 0.0,
     canton: str | None = "Canton de Genève",
     api_url: str | None = None,
+    column_prefix: str = "SITG_",
 ) -> pl.DataFrame:
     """
     Géocode une colonne d'adresses via l'API SITG Lab (ou un endpoint compatible).
@@ -189,9 +198,16 @@ async def sitg_geocode_async(
                     aussi via la variable d'environnement `SITG_GEOCODE_API_URL`). Permet
                     de pointer sur un autre fournisseur compatible avec ce format de réponse
                     (ex. un déploiement local de geocoder-service).
+    column_prefix : préfixe des colonnes retournées (défaut : `"SITG_"`). Utile pour
+                    distinguer visuellement la provenance quand on géocode la même donnée
+                    avec plusieurs fournisseurs (ex. `"GS_"` pour geocoder-service). La
+                    validation/cast interne se fait toujours sur le schéma canonique
+                    (colonnes `SITG_*`) ; seul le nom final est renommé. Pour valider le
+                    résultat avec `validate_schema`, passer le même `column_prefix`.
     Retourne
     --------
-    DataFrame avec la colonne adresse + les champs SITG définis dans SitgGeocodeSchema.
+    DataFrame avec la colonne adresse + les champs SITG définis dans SitgGeocodeSchema
+    (renommés avec `column_prefix` si différent de `"SITG_"`).
     Les types sont validés (et castés) et les écarts éventuels sont loggés.
     """
     adresses = df[col_adresse].to_list()
@@ -258,6 +274,9 @@ async def sitg_geocode_async(
         logger.info("{}/{} adresse(s) géocodée(s) avec succès", n_kept, n_total)
     else:
         logger.info("{}/{} adresse(s) conservée(s) dans le résultat final", n_kept, n_total)
+
+    if column_prefix != "SITG_":
+        result = result.rename({f: f.replace("SITG_", column_prefix, 1) for f in _RESULT_FIELDS})
 
     return result
 
